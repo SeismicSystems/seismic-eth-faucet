@@ -78,7 +78,7 @@ func (s *Server) handleInfo() http.HandlerFunc {
 			return
 		}
 		renderJSON(w, infoResponse{
-			Account:         s.Sender().String(),
+			Accounts:        []string{s.Sender().String()},
 			Network:         s.cfg.network,
 			Symbol:          s.cfg.symbol,
 			Payout:          strconv.FormatFloat(s.cfg.payout, 'f', -1, 64),

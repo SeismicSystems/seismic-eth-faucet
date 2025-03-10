@@ -44,7 +44,7 @@ func NewTxBuilderLoadBalancer(provider string, privateKeys []*ecdsa.PrivateKey, 
 }
 
 // Sender returns the current address being used for transactions
-// Note: This is mainly for informational purposes as we rotate through addresses
+// Note: This is mainly for informational purposesguite rotate through addresses
 func (lb *TxBuilderLoadBalancer) Sender() common.Address {
 	lb.mu.RLock()
 	defer lb.mu.RUnlock()
