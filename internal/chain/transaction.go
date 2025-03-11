@@ -18,6 +18,7 @@ import (
 type TxBuilder interface {
 	Sender() common.Address
 	Transfer(ctx context.Context, to string, value *big.Int) (common.Hash, error)
+	GetAllSenders() []common.Address
 }
 
 type TxBuild struct {
@@ -59,11 +60,22 @@ func NewTxBuilder(provider string, privateKey *ecdsa.PrivateKey, chainID *big.In
 	return txBuilder, nil
 }
 
+// GetAllSenders returns all addresses managed by this builder
+// For a single TxBuild, this is just the one address
+func (b *TxBuild) GetAllSenders() []common.Address {
+	return []common.Address{b.fromAddress}
+}
+
 func (b *TxBuild) Sender() common.Address {
 	return b.fromAddress
 }
 
 func (b *TxBuild) Transfer(ctx context.Context, to string, value *big.Int) (common.Hash, error) {
+	// Log the sender address being used
+	log.WithFields(log.Fields{
+		"sender": b.fromAddress.String(),
+	}).Info("Using account for transaction")
+
 	gasLimit := uint64(21000)
 	toAddress := common.HexToAddress(to)
 	nonce := b.getAndIncrementNonce()
