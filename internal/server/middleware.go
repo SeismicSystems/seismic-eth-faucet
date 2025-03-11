@@ -20,6 +20,7 @@ type Limiter struct {
 	cache      *ttlcache.Cache
 	proxyCount int
 	ttl        time.Duration
+	testMode   bool
 }
 
 func NewLimiter(proxyCount int, ttl time.Duration) *Limiter {
@@ -29,7 +30,12 @@ func NewLimiter(proxyCount int, ttl time.Duration) *Limiter {
 		cache:      cache,
 		proxyCount: proxyCount,
 		ttl:        ttl,
+		testMode:   false,
 	}
+}
+
+func (l *Limiter) EnableTestMode() {
+	l.testMode = true
 }
 
 func (l *Limiter) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
@@ -50,6 +56,15 @@ func (l *Limiter) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Ha
 	}
 
 	clientIP := getClientIPFromRequest(l.proxyCount, r)
+
+	if l.testMode {
+		testIP := r.Header.Get("X-Test-IP")
+		if testIP != "" {
+			log.WithField("test-ip", testIP).Info("Using test IP instead of real IP")
+			clientIP = testIP
+		}
+	}
+
 	l.mutex.Lock()
 	if l.limitByKey(w, address) || l.limitByKey(w, clientIP) {
 		l.mutex.Unlock()

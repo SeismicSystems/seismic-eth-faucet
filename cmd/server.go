@@ -117,26 +117,3 @@ func Execute() {
 	signal.Notify(c, os.Interrupt)
 	<-c
 }
-
-func getPrivateKeyFromFlags() (*ecdsa.PrivateKey, error) {
-	if *privKeyFlag != "" {
-		hexkey := *privKeyFlag
-		if chain.Has0xPrefix(hexkey) {
-			hexkey = hexkey[2:]
-		}
-		return crypto.HexToECDSA(hexkey)
-	} else if *keyJSONFlag == "" {
-		return nil, errors.New("missing private key or keystore")
-	}
-
-	keyfile, err := chain.ResolveKeyfilePath(*keyJSONFlag)
-	if err != nil {
-		return nil, err
-	}
-	password, err := os.ReadFile(*keyPassFlag)
-	if err != nil {
-		return nil, err
-	}
-
-	return chain.DecryptKeyfile(keyfile, strings.TrimRight(string(password), "\r\n"))
-}
