@@ -71,6 +71,11 @@ func (b *TxBuild) Sender() common.Address {
 }
 
 func (b *TxBuild) Transfer(ctx context.Context, to string, value *big.Int) (common.Hash, error) {
+	// Log the sender address being used
+	log.WithFields(log.Fields{
+		"sender": b.fromAddress.String(),
+	}).Info("Using account for transaction")
+
 	gasLimit := uint64(21000)
 	toAddress := common.HexToAddress(to)
 	nonce := b.getAndIncrementNonce()

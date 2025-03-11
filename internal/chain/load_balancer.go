@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
+	log "github.com/sirupsen/logrus"
 )
 
 var ErrNoPrivateKeys = errors.New("no private keys provided")
@@ -55,14 +56,21 @@ func (lb *TxBuilderLoadBalancer) Sender() common.Address {
 
 // Transfer sends a transaction using the next available TxBuilder in round-robin fashion
 func (lb *TxBuilderLoadBalancer) Transfer(ctx context.Context, to string, value *big.Int) (common.Hash, error) {
-	lb.mu.RLock()
-	defer lb.mu.RUnlock()
-
 	// Get the next builder index using atomic operation for thread safety
 	idx := atomic.AddUint32(&lb.current, 1) % uint32(len(lb.builders))
 
-	// Use the selected builder to send the transaction
-	return lb.builders[idx].Transfer(ctx, to, value)
+	lb.mu.RLock()
+	builder := lb.builders[idx]
+	lb.mu.RUnlock()
+
+	// Log which builder/account is being used
+	log.WithFields(log.Fields{
+		"index":         idx,
+		"account":       builder.Sender().String(),
+		"totalAccounts": len(lb.builders),
+	}).Info("Load balancer selected account")
+
+	return builder.Transfer(ctx, to, value)
 }
 
 // GetAllSenders returns all addresses managed by this load balancer

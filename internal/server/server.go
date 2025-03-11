@@ -29,7 +29,18 @@ func NewServer(builder chain.TxBuilder, cfg *Config) *Server {
 func (s *Server) setupRouter() *http.ServeMux {
 	router := http.NewServeMux()
 	router.Handle("/", http.FileServer(web.Dist()))
+
+	// RATE LIMITING: Uncomment the desired option
+
+	// Option 1: Normal rate limiting
 	limiter := NewLimiter(s.cfg.proxyCount, time.Duration(s.cfg.interval)*time.Minute)
+
+	// // Option 2: No rate limiting for testing
+	// limiter := negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	// 	log.Info("Rate limiting bypassed for testing")
+	// 	next(w, r)
+	// })
+
 	hcaptcha := NewCaptcha(s.cfg.hcaptchaSiteKey, s.cfg.hcaptchaSecret)
 	router.Handle("/api/claim", negroni.New(limiter, hcaptcha, negroni.Wrap(s.handleClaim())))
 	router.Handle("/api/info", s.handleInfo())
